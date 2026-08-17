@@ -1,0 +1,52 @@
+name: brew test-bot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-bot:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew Bundler RubyGems
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.os }}-rubygems-
+
+      - name: Install Homebrew Bundler RubyGems
+        run: brew install-bundler-gems
+
+      - run: brew test-bot --only-cleanup-before
+
+      - name: Check the tap's syntax and style
+        run: brew test-bot --only-tap-syntax
+
+      # Builds the formula, runs its `test do` block, and audits it. Enabled on push as
+      # well as pull_request: this tap is small enough that every change should prove it
+      # still installs, and macOS runners are the only place that can be verified.
+      - name: Install, test and audit the changed formulae
+        run: brew test-bot --only-formulae
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.os }}
+          path: |
+            ~/Library/Logs/Homebrew/
+            /home/linuxbrew/.linuxbrew/Library/Logs/Homebrew/
+          if-no-files-found: ignore
