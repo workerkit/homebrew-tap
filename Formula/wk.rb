@@ -1,8 +1,8 @@
 class Wk < Formula
   desc "Manage WorkerKit AI workers and browse the kit directory"
   homepage "https://workerkit.ai"
-  url "https://registry.npmjs.org/@workerkit/cli/-/cli-0.1.0.tgz"
-  sha256 "256272a7ba3c12f530a7ec8e5af12dbce945225107280c307774d09e2c6846eb"
+  url "https://registry.npmjs.org/@workerkit/cli/-/cli-0.3.4.tgz"
+  sha256 "f3c3cd469840a1224f4bc6f994ed2f5264883e52ae6a587679d93cbc5d39f892"
   license "MIT"
 
   depends_on "node"

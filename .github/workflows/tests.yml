@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Cache Homebrew Bundler RubyGems
         uses: actions/cache@v4
@@ -35,11 +35,22 @@ jobs:
       - name: Check the tap's syntax and style
         run: brew test-bot --only-tap-syntax
 
-      # Builds the formula, runs its `test do` block, and audits it. Enabled on push as
-      # well as pull_request: this tap is small enough that every change should prove it
-      # still installs, and macOS runners are the only place that can be verified.
-      - name: Install, test and audit the changed formulae
+      # test-bot handles bottling mechanics and audits, but it can mark a failed
+      # formula install as "ignored" and still exit 0 - a green run proved nothing
+      # the day the wk 0.1.1 install actually failed. The steps below are the
+      # un-ignorable gate: plain brew commands that print verbosely and fail the
+      # job for real.
+      - name: Install, test and audit the changed formulae (test-bot)
         run: brew test-bot --only-formulae
+
+      - name: Install the formula for real
+        run: brew install --verbose workerkit/tap/wk
+
+      - name: Run the formula's test block
+        run: brew test --verbose workerkit/tap/wk
+
+      - name: Audit strictly
+        run: brew audit --strict workerkit/tap/wk
 
       - name: Upload logs on failure
         if: failure()
